@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: devops-ui
+  labels:
+    app: devops-ui
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: devops-ui
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: devops-ui
+    spec:
+      containers:
+        - name: ui
+          image: devopsdemoacr.azurecr.io/devops-ui:IMAGE_TAG
+          ports:
+            - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: devops-ui-svc
+spec:
+  selector:
+    app: devops-ui
+  ports:
+    - port: 80
+      targetPort: 80
+  type: ClusterIP
