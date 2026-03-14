@@ -1,0 +1,66 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main]
+
+env:
+  ACR: devopsdemoacr.azurecr.io
+  API_IMAGE: devopsdemoacr.azurecr.io/devops-api
+  UI_IMAGE: devopsdemoacr.azurecr.io/devops-ui
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Log in to ACR
+        run: az acr login --name devopsdemoacr
+
+      - name: Build and push API image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: docker/Dockerfile-api
+          push: true
+          tags: |
+            ${{ env.API_IMAGE }}:latest
+            ${{ env.API_IMAGE }}:${{ github.sha }}
+
+      - name: Build and push UI image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: docker/Dockerfile-ui
+          push: true
+          tags: |
+            ${{ env.UI_IMAGE }}:latest
+            ${{ env.UI_IMAGE }}:${{ github.sha }}
+
+  deploy-to-aks:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Get AKS credentials
+        run: az aks get-credentials --resource-group devops-demo-rg --name devops-demo-aks
+
+      - name: Substitute image tag
+        run: |
+          sed -i "s|IMAGE_TAG|${{ github.sha }}|g" k8s/api-deployment.yaml
+          sed -i "s|IMAGE_TAG|${{ github.sha }}|g" k8s/ui-deployment.yaml
+
+      - name: Deploy to AKS
+        run: kubectl apply -f k8s/
