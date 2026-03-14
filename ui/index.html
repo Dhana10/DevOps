@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<title>Agentic DevOps Demo</title>
+</head>
+
+<body>
+
+<h1>Agentic DevOps Demo</h1>
+
+<button onclick="callAPI()">Call API</button>
+
+<p id="result">Result will appear here</p>
+
+<script>
+
+function callAPI(){
+
+fetch("http://127.0.0.1:5000/api")
+.then(response => response.json())
+.then(data => {
+
+document.getElementById("result").innerHTML = data.message;
+
+})
+.catch(error => {
+
+document.getElementById("result").innerHTML = "API Error";
+
+console.log(error);
+
+});
+
+}
+
+</script>
+
+</body>
+
+</html>
