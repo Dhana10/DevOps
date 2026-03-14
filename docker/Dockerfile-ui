@@ -1,9 +1,7 @@
-FROM python:3.10
+FROM nginx:alpine
 
-WORKDIR /app
+COPY ui/index.html /usr/share/nginx/html/index.html
 
-COPY api/ .
+EXPOSE 80
 
-RUN pip install flask
-
-CMD ["python","app.py"]
+CMD ["nginx", "-g", "daemon off;"]
